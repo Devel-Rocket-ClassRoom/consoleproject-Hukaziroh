@@ -282,6 +282,61 @@ namespace ConsoleApp1
 
     public class DungeonGame
     {
+        Position GetNextPosition(Position currentPos)
+        {
+
+            char input = char.ToUpper(Console.ReadKey(true).KeyChar);
+            Console.WriteLine();
+
+            int nextX = currentPos.X;
+            int nextY = currentPos.Y;
+
+            switch (input)
+            {
+                case 'U': nextY--; break;
+                case 'D': nextY++; break;
+                case 'L': nextX--; break;
+                case 'R': nextX++; break;
+                default:                  
+                    return null;
+            }
+            return new Position(nextX, nextY);
+        }
+
+        void MovePlayer(Player player, Map map, int nextX, int nextY)
+        {
+            map.Maps[player.Pos.Y, player.Pos.X] = ' ';
+            player.Pos.X = nextX;
+            player.Pos.Y = nextY;
+            map.Maps[player.Pos.Y, player.Pos.X] = 'P';
+        }
+
+        void MoveMonster(Monster m, Map map, Random randMove)
+        {
+            if (m == null || map.Maps[m.Pos.Y, m.Pos.X] != 'M' && map.Maps[m.Pos.Y, m.Pos.X] != 'B')
+                return;
+            int dir = randMove.Next(0, 4);
+            int mNextX = m.Pos.X;
+            int mNextY = m.Pos.Y;
+
+            if (dir == 0) mNextX--;
+            else if (dir == 1) mNextX++;
+            else if (dir == 2) mNextY--;
+            else if (dir == 3) mNextY++;
+
+            if (map.Maps[mNextY, mNextX] == ' ')
+            {
+                map.Maps[m.Pos.Y, m.Pos.X] = ' ';
+
+                m.Pos.Y = mNextY;
+                m.Pos.X = mNextX;
+
+                if (m is BossMonster)
+                    map.Maps[m.Pos.Y, m.Pos.X] = 'B';
+                else
+                    map.Maps[m.Pos.Y, m.Pos.X] = 'M';
+            }
+        }
         public void PlayGame(int stageCount)
         {
             Console.CursorVisible = false;
@@ -342,25 +397,19 @@ namespace ConsoleApp1
                     Console.WriteLine();
                     Console.WriteLine($"[스테이지 {s + 1}] 몬스터 처치: {monsterCount}/{maxMonsters} 보스몬스터 처치: {bossCount}/{bossMonster}");
                     Console.WriteLine("L(왼쪽),R(오른쪽),U(위),D(아래) 를 눌러 플레이어를 이동시키세요");
+                   
                     map.PrintMap();
-
-                    char input = char.ToUpper(Console.ReadKey(true).KeyChar);
-                    Console.WriteLine();
-
-                    int nextX = player.Pos.X;
-                    int nextY = player.Pos.Y;
-
-                    if (input == 'U') nextY--;
-                    else if (input == 'D') nextY++;
-                    else if (input == 'L') nextX--;
-                    else if (input == 'R') nextX++;
-                    else
+                  
+                    Position nextPos = GetNextPosition(player.Pos);
+                    if(nextPos == null)
                     {
                         Console.Clear();
                         Console.WriteLine("잘못된 입력입니다.");
                         continue;
                     }
 
+                    int nextX = nextPos.X;
+                    int nextY = nextPos.Y;
                     Console.Clear();
 
                     if (map.Maps[nextY, nextX] == '#')
@@ -375,10 +424,7 @@ namespace ConsoleApp1
                         if (isWin)
                         {
                             monsterCount++;
-                            map.Maps[player.Pos.Y, player.Pos.X] = ' ';
-                            player.Pos.X = nextX;
-                            player.Pos.Y = nextY;
-                            map.Maps[player.Pos.Y, player.Pos.X] = 'P';
+                            MovePlayer(player,map,nextX,nextY);
 
                             for (int i = 0; i < enemies.Length; i++)
                             {
@@ -413,10 +459,7 @@ namespace ConsoleApp1
                             if (isWin)
                             {
                                 bossCount++;
-                                map.Maps[player.Pos.Y, player.Pos.X] = ' ';
-                                player.Pos.X = nextX;
-                                player.Pos.Y = nextY;
-                                map.Maps[player.Pos.Y, player.Pos.X] = 'P';
+                                MovePlayer(player, map, nextX, nextY);
 
                                 for (int i = 0; i < enemies.Length; i++)
                                 {
@@ -461,48 +504,21 @@ namespace ConsoleApp1
                     else
                     {
                         Console.WriteLine("이곳은 안전합니다.");
-                        map.Maps[player.Pos.Y, player.Pos.X] = ' ';
-                        player.Pos.X = nextX;
-                        player.Pos.Y = nextY;
-                        map.Maps[player.Pos.Y, player.Pos.X] = 'P';
+                        MovePlayer(player, map, nextX, nextY);
                     }
 
                     Random randMove = new Random();
 
                     for (int i = 0; i < enemies.Length; i++)
                     {
-                        Monster m = enemies[i];
-                        if (m == null || map.Maps[m.Pos.Y, m.Pos.X] != 'M' && map.Maps[m.Pos.Y, m.Pos.X] != 'B')
-                            continue;
-                        int dir = randMove.Next(0, 4);
-                        int mNextX = m.Pos.X;
-                        int mNextY = m.Pos.Y;
-
-                        if (dir == 0)
-                            mNextX--;
-                        else if (dir == 1)
-                            mNextX++;
-                        else if (dir == 2)
-                            mNextY--;
-                        else if (dir == 3)
-                            mNextY++;
-
-                        if (map.Maps[mNextY, mNextX] == ' ')
-                        {
-                            map.Maps[m.Pos.Y, m.Pos.X] = ' ';
-
-                            m.Pos.Y = mNextY;
-                            m.Pos.X = mNextX;
-
-                            if (m is BossMonster)
-                                map.Maps[m.Pos.Y, m.Pos.X] = 'B';
-                            else
-                                map.Maps[m.Pos.Y, m.Pos.X] = 'M';
-                        }
+                        MoveMonster(enemies[i], map, randMove);
+                        
                     }
                 }
             }
         }
+
+       
     }
     internal class Program
     {
