@@ -2,6 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Windows.Forms;
+using System.Xml.Linq;
+using static ConsoleApp1.Battle;
 using static System.Net.Mime.MediaTypeNames;
 namespace ConsoleApp1
 {
@@ -30,80 +34,177 @@ namespace ConsoleApp1
     }
     public class Battle
     {
-        public bool DoBattle(Player player, Monster monster)
+        public void DrawBoard(Player player, Monster monster, string message)
         {
-            Random rand = new Random();
+            int mHp = monster is BossMonster ? ((BossMonster)monster).BossHp : monster.Hp;
+            string mName = monster is BossMonster ? "보스 몬스터" : "야생의 몬스터";
             Console.Clear();
-            Console.WriteLine("앗! 야생의 몬스터가 나타났다!\n");
+            Console.WriteLine("======================================================================");
+            Console.WriteLine();
+            Console.WriteLine($"                           [ {mName} ]");
+            Console.WriteLine($"                             HP: {Math.Max(0, mHp)}");
+            Console.WriteLine();
+
+            if (monster is BossMonster)
+            {
+                Console.WriteLine("                              / \\__ / \\");
+                Console.WriteLine("                              ( @ @ )");
+                Console.WriteLine("                               ) = ( ");
+                Console.WriteLine("                              ( ___ )");
+                Console.WriteLine("                              / \\   ");
+            }
+            else
+            {
+                Console.WriteLine("                               ( `_´)");
+                Console.WriteLine("                               />  />");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine($"  [ 플레이어 ] 직업: {player.job} | 무기: {player.Weapon}");
+            Console.WriteLine($"  ▶ HP : {Math.Max(0, player.Hp),-4} | ATK : {player.Atk,-4}");
+            Console.WriteLine("======================================================================");
+            Console.WriteLine($"  {message}");
+            Console.WriteLine("======================================================================");
+            Console.WriteLine("  1.공격 (Attack)              2.도망가기 (Run)");
+            Console.WriteLine("======================================================================");
+            Console.Write("  행동을 선택하세요: ");
+        }
+
+        public int DoBattle(Player player, Monster monster)
+        {
+       
+            Random rand = new Random();
+
+            DrawBoard(player, monster, "앗! 야생의 몬스터가 나타났다!");
+            Console.ReadKey(true);
 
             while (player.Hp > 0 && monster.Hp > 0)
             {
-                if (rand.Next(0, 100) < 90)
+                DrawBoard(player, monster, "당신의 턴입니다. 무엇을 할까요?");
+
+                char input = Console.ReadKey().KeyChar;
+
+                if (input == '1')
                 {
-                    monster.Hp -= player.Atk;
-                    Console.WriteLine($"플레이어가 공격! {player.Atk}데미지! 몬스터 남은 체력: {Math.Max(0, monster.Hp)}");
+                    if (rand.Next(0, 100) < 90)
+                    {
+                        monster.Hp -= player.Atk;
+                        DrawBoard(player, monster, $"플레이어의 공격! 몬스터에게 {player.Atk}의 피해!");
+                    }
+                    else
+                    {
+                        DrawBoard(player, monster, "앗! 공격이 빗나갔다!");
+                    }
+                    Console.ReadKey(true);
+                }
+                else if (input == '2')
+                {
+                    if (rand.Next(0, 100) < 50)
+                    {
+                        DrawBoard(player, monster, "무사히 도망쳤다!");
+                        Console.ReadKey(true);
+                        return 2;
+                    }
+                    else
+                    {
+                        DrawBoard(player, monster, "도망치지 못했다!");
+                        Console.ReadKey(true);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"공격이 빚나감!");
+                    continue;
                 }
+
                 if (monster.Hp <= 0)
                 {
-                    Console.WriteLine("몬스터를 물리쳤습니다!");
-                    return true;
+                    DrawBoard(player, monster, "몬스터를 물리쳤습니다!");
+                    Console.ReadKey(true);
+                    return 1;
                 }
+
+
                 player.Hp -= monster.Atk;
-                Console.WriteLine($"몬스터가 반격! 플레이어 남은 체력: {Math.Max(0, player.Hp)}");
-                Console.WriteLine("다음턴으로 넘어가시려면 아무키를 눌러주세요");
+                DrawBoard(player, monster, $"몬스터의 반격! 플레이어는 {monster.Atk}의 피해를 입었다!");
                 Console.ReadKey(true);
-                Console.WriteLine();
+
                 if (player.Hp <= 0)
                 {
-                    Console.WriteLine("플레이어가 쓰러졌습니다 게임 오버!");
-                    return false;
+                    DrawBoard(player, monster, "플레이어가 눈앞이 깜깜해졌다...");
+                    Console.ReadKey(true);
+                    return 0;
                 }
             }
-            return true;
+            return 1;
         }
-        public bool DoBossBattle(Player player, BossMonster boss)
+        public int DoBossBattle(Player player, BossMonster boss)
         {
-            Console.Clear();
-            Console.WriteLine("앗! 보스가 나타났다!");
+            Random rand = new Random();
 
-            while (player.Hp > 0 && boss.BossHp > 0)
+            DrawBoard(player, boss, "앗! 야생의 몬스터가 나타났다!");
+            Console.ReadKey(true);
+
+            while (player.Hp > 0 && boss.Hp > 0)
             {
-                Random rand = new Random();
-                if (rand.Next(0, 100) < 80)
+                DrawBoard(player, boss, "당신의 턴입니다. 무엇을 할까요?");
+
+                char input = Console.ReadKey().KeyChar;
+
+                if (input == '1')
                 {
-                    boss.BossHp -= player.Atk;
-                    Console.WriteLine($"플레이어가 공격! {player.Atk}데미지! 보스 남은 체력: {Math.Max(0, boss.BossHp)}");
+                    if (rand.Next(0, 100) < 90)
+                    {
+                        boss.Hp -= player.Atk;
+                        DrawBoard(player, boss, $"플레이어의 공격! 몬스터에게 {player.Atk}의 피해!");
+                    }
+                    else
+                    {
+                        DrawBoard(player, boss, "앗! 공격이 빗나갔다!");
+                    }
+                    Console.ReadKey(true);
+                }
+                else if (input == '2')
+                {
+                    if (rand.Next(0, 100) < 50)
+                    {
+                        DrawBoard(player, boss, "무사히 도망쳤다!");
+                        Console.ReadKey(true);
+                        return 2;
+                    }
+                    else
+                    {
+                        DrawBoard(player, boss, "도망치지 못했다!");
+                        Console.ReadKey(true);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"공격이 빚나감!");
+                    continue;
                 }
 
-                if (boss.BossHp <= 0)
+                if (boss.Hp <= 0)
                 {
-                    Console.WriteLine("보스를 물리쳤습니다!");
-                    return true;
+                    DrawBoard(player, boss, "몬스터를 물리쳤습니다!");
+                    Console.ReadKey(true);
+                    return 1;
                 }
 
-                player.Hp -= boss.BossAtk;
-                Console.WriteLine($"보스가 반격! 플레이어 남은 체력: {Math.Max(0, player.Hp)}");
-                Console.WriteLine("다음턴으로 넘어가시려면 아무키를 눌러주세요");
+
+                player.Hp -= boss.Atk;
+                DrawBoard(player, boss, $"몬스터의 반격! 플레이어는 {boss.Atk}의 피해를 입었다!");
                 Console.ReadKey(true);
-                Console.WriteLine();
+
                 if (player.Hp <= 0)
                 {
-                    Console.WriteLine("플레이어가 쓰러졌습니다 게임 오버!");
-                    return false;
+                    DrawBoard(player, boss, "플레이어가 눈앞이 깜깜해졌다...");
+                    Console.ReadKey(true);
+                    return 0;
                 }
             }
-            return true;
+            return 1;
         }
     }
-
 
     public class Player : Weapon, IJob
     {
@@ -293,10 +394,10 @@ namespace ConsoleApp1
 
             switch (input)
             {
-                case 'U': nextY--; break;
-                case 'D': nextY++; break;
-                case 'L': nextX--; break;
-                case 'R': nextX++; break;
+                case 'W': nextY--; break;
+                case 'S': nextY++; break;
+                case 'A': nextX--; break;
+                case 'D': nextX++; break;
                 default:                  
                     return null;
             }
@@ -396,7 +497,7 @@ namespace ConsoleApp1
                     Console.WriteLine($"플레이어 직업 : {job}\n플레이어 무기 : {weapon}\n플레이어 HP: {player.Hp} 플레이어 ATK: {player.Atk} ");
                     Console.WriteLine();
                     Console.WriteLine($"[스테이지 {s + 1}] 몬스터 처치: {monsterCount}/{maxMonsters} 보스몬스터 처치: {bossCount}/{bossMonster}");
-                    Console.WriteLine("L(왼쪽),R(오른쪽),U(위),D(아래) 를 눌러 플레이어를 이동시키세요");
+                    Console.WriteLine("A(왼쪽),D(오른쪽),W(위),S(아래) 를 눌러 플레이어를 이동시키세요");
                    
                     map.PrintMap();
                   
@@ -420,8 +521,8 @@ namespace ConsoleApp1
                     {
 
                         Monster battleMonster = new Monster(4);
-                        bool isWin = battle.DoBattle(player, battleMonster);
-                        if (isWin)
+                        int battleResult = battle.DoBattle(player, battleMonster);
+                        if (battleResult == 1)
                         {
                             monsterCount++;
                             MovePlayer(player,map,nextX,nextY);
@@ -437,6 +538,10 @@ namespace ConsoleApp1
 
                             Console.WriteLine("계속하려면 아무키를 눌러주세요");
                             Console.ReadKey(true);
+                            Console.Clear();
+                        }
+                        else if(battleResult == 2)
+                        {
                             Console.Clear();
                         }
                         else
@@ -455,8 +560,8 @@ namespace ConsoleApp1
                         }
                         else
                         {
-                            bool isWin = battle.DoBossBattle(player, battleBossMonster);
-                            if (isWin)
+                            int battleResult = battle.DoBossBattle(player, battleBossMonster);
+                            if (battleResult == 1)
                             {
                                 bossCount++;
                                 MovePlayer(player, map, nextX, nextY);
@@ -472,6 +577,10 @@ namespace ConsoleApp1
 
                                 Console.WriteLine("계속하려면 아무키를 눌러주세요");
                                 Console.ReadKey(true);
+                                Console.Clear();
+                            }
+                            else if (battleResult == 2)
+                            {
                                 Console.Clear();
                             }
                             else
