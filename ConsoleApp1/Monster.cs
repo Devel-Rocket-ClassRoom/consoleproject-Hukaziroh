@@ -2,43 +2,40 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ConsoleApp1
 {
-    public class Monster
-    {
-        public int Hp =10;
-        public int Atk = 4;
-     
-        public Position Pos;
+    public class Monster : Character
+    {    
         public Monster() { }
 
-        public Monster(int x)
+        public Monster(int hp, int atk, int x, int y)
         {
-            Hp = x;
+            Hp = hp;
+            Atk = atk;
+            Pos = new Position(x, y);
         }
 
-        public Monster(int x, int y)
+        public override string OnDie()
         {
-            Pos = new Position(x, y);
+            return "야생의 몬스터가 쓰러졌습니다.";
         }
     }
 
     public class BossMonster : Monster
     {
-        public int BossHp = 30;
-        public int BossAtk = 8;
-
-        public BossMonster(int s)
+        public BossMonster(int s, int x, int y)
         {
-            BossHp = 30 + (s * 5);
-            BossAtk = 8 + (s * 2);
+            Hp = 30 + (s * 5);
+            Atk = 8 + (s * 2);
+            Pos = new Position(x, y);
         }
 
-        public BossMonster(int x, int y)
+        public override string OnDie()
         {
-            Pos = new Position(x, y);
+            return "보스 몬스터가 쓰러졌습니다.";
         }
     }
 }

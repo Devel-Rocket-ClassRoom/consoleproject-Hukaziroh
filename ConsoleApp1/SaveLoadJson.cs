@@ -32,7 +32,6 @@ namespace ConsoleApp1
                 }
                 result[i] = new string(rowChars);
             }
-
             return result;
         }
 

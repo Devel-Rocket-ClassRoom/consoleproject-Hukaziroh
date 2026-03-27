@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ConsoleApp1
@@ -13,7 +14,9 @@ namespace ConsoleApp1
         public int Rows;
         public int Cols;
 
-        SaveLoadJson maps = new SaveLoadJson();
+        Random rand = new Random();
+
+        //SaveLoadJson maps = new SaveLoadJson();
         public Map(int rows, int cols)
         {
             Rows = rows;
@@ -23,8 +26,7 @@ namespace ConsoleApp1
 
         public void InitializeMap(int s)
         {
-            Console.CursorVisible = false;
-            Random rand = new Random();
+            Console.CursorVisible = false;          
             for (int y = 0; y < Rows; y++)
             {
                 for (int x = 0; x < Cols; x++)
@@ -37,7 +39,7 @@ namespace ConsoleApp1
                         Maps[y, x] = ' ';
                 }
             }
-            maps.ConvertMap2(Maps);
+            //maps.ConvertMap2(Maps);
         }
 
         public void PrintMap()
@@ -54,7 +56,6 @@ namespace ConsoleApp1
 
         public Position GetRandomEmptyPosition()
         {
-            Random rand = new Random();
             while (true)
             {
                 int r = rand.Next(1, Rows - 1);

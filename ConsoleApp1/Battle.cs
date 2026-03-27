@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ConsoleApp1
@@ -10,13 +11,12 @@ namespace ConsoleApp1
     {
         public void DrawBoard(Player player, Monster monster, string message)
         {
-            int mHp = monster is BossMonster ? ((BossMonster)monster).BossHp : monster.Hp;
             string mName = monster is BossMonster ? "보스 몬스터" : "야생의 몬스터";
             Console.Clear();
             Console.WriteLine("======================================================================");
             Console.WriteLine();
             Console.WriteLine($"                           [ {mName} ]");
-            Console.WriteLine($"                             HP: {Math.Max(0, mHp)}");
+            Console.WriteLine($"                             HP: {Math.Max(0, monster.Hp)}");
             Console.WriteLine();
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             if (monster is BossMonster)
@@ -53,23 +53,18 @@ namespace ConsoleApp1
             Console.Write("  행동을 선택하세요: ");
         }
 
-        private int GetHp(Monster m) => m is BossMonster b ? b.BossHp : m.Hp;     
-        private int GetAtk(Monster m) => m is BossMonster b ? b.BossAtk : m.Atk;
-        private void ApplyDamage(Monster m, int damage)
-        {
-            if (m is BossMonster b) b.BossHp -= damage;
-            else m.Hp -= damage;
-        }
-       
+
         public int DoBattle(Player player, Monster monster)
         {
             Random rand = new Random();
+
             bool isBoss = monster is BossMonster;
             string encounterMsg = isBoss ? "앗! 보스 몬스터가 나타났다!" : "앗! 야생의 몬스터가 나타났다!";
+
             DrawBoard(player, monster, encounterMsg);
             Console.ReadKey(true);
 
-            while (player.Hp > 0 && GetHp(monster) > 0)
+            while (player.Hp > 0 && monster.Hp > 0)
             {
                 DrawBoard(player, monster, "당신의 턴입니다. 무엇을 할까요?");
 
@@ -79,7 +74,7 @@ namespace ConsoleApp1
                 {
                     if (rand.Next(0, 100) < 90)
                     {
-                        ApplyDamage(monster, player.Atk);
+                        monster.Hp -= player.Atk;
                         DrawBoard(player, monster, $"플레이어의 공격! 몬스터에게 {player.Atk}의 피해!");
                     }
                     else
@@ -107,21 +102,19 @@ namespace ConsoleApp1
                     continue;
                 }
 
-                if (GetHp(monster) <= 0)
+                if (monster.Hp <= 0)
                 {
-                    DrawBoard(player, monster, "몬스터를 물리쳤습니다!");
+                    DrawBoard(player, monster, monster.OnDie());
                     Console.ReadKey(true);
                     return 1;
                 }
-
-                int mAtk = GetAtk(monster);
-                player.Hp -= mAtk;
-                DrawBoard(player, monster, $"몬스터의 반격! 플레이어는 {mAtk}의 피해를 입었다!");
+                player.Hp -= monster.Atk;
+                DrawBoard(player, monster, $"몬스터의 반격! 플레이어는 {monster.Atk}의 피해를 입었다!");
                 Console.ReadKey(true);
 
                 if (player.Hp <= 0)
                 {
-                    DrawBoard(player, monster, "플레이어가 눈앞이 깜깜해졌다...");
+                    DrawBoard(player, monster, player.OnDie());
                     Console.ReadKey(true);
                     return 0;
                 }
